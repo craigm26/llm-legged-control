@@ -4,6 +4,7 @@ import json, csv, html, os, shutil, hashlib, subprocess
 SRC = os.path.expanduser('~/projects/duckbench/sim/malik')
 OUT = os.path.dirname(os.path.abspath(__file__))
 R = json.load(open(f'{SRC}/results.json'))
+import datetime; DATE = datetime.datetime.fromisoformat(R['date'].replace('Z','+00:00')).astimezone().strftime('%Y-%m-%d')
 NEU = json.load(open(f'{SRC}/neutral.json'))
 rows = list(csv.reader(open(f'{SRC}/commands_open_loop.csv')))
 os.makedirs(f'{OUT}/data', exist_ok=True); os.makedirs(f'{OUT}/sim', exist_ok=True)
@@ -69,7 +70,7 @@ def fig_terrains():
     for t, v in R['terrains'].items():
         pts = ' '.join(f'{20 + (W-30) * x / 2.0:.1f},{H - 14 - 900 * h:.1f}' for x, h in v['profile'])
         first = f'20,{H-14}'
-        out.append(f'<figure class="panel"><figcaption>{t}</figcaption><svg viewBox="0 0 {W} {H}" role="img" aria-label="ground profile {t}"><polygon class="ground" points="{first} {pts} {20+(W-30):.1f},{H-14}"/><text class="tick" x="20" y="{H-2}">0 m</text><text class="tick" x="{20+(W-30)/2:.0f}" y="{H-2}" text-anchor="middle">1 m</text><text class="tick" x="{20+(W-30):.0f}" y="{H-2}" text-anchor="end">2 m</text><text class="tick" x="{W-4}" y="12" text-anchor="end">{esc(v["note"])}</text></svg></figure>')
+        out.append(f'<figure class="panel"><figcaption>{t}</figcaption><svg viewBox="0 0 {W} {H}" role="img" aria-label="ground profile {t}"><polygon class="ground" points="{first} {pts} {20+(W-30):.1f},{H-14}"/><text class="tick" x="20" y="{H-2}">0 m</text><text class="tick" x="{20+(W-30)/2:.0f}" y="{H-2}" text-anchor="middle">1 m</text><text class="tick" x="{20+(W-30):.0f}" y="{H-2}" text-anchor="end">2 m</text><text class="tick" x="{W-4}" y="12" text-anchor="end" font-size="8">{esc(v["note"])}</text></svg></figure>')
     return '<div class="multiples">' + ''.join(out) + '</div>'
 
 # ── tables
@@ -138,7 +139,7 @@ details{{margin:.6em 0}}summary{{cursor:pointer;color:var(--ink2)}}
 </head>
 <body>
 <main>
-<p class="byline">Craig Merry, pairing with Claude Code · {R['date'][:10]} · <a href="https://github.com/craigm26/llm-legged-control">source, data and sim</a></p>
+<p class="byline">Craig Merry, pairing with Claude Code · {DATE} · <a href="https://github.com/craigm26/llm-legged-control">source, data and sim</a></p>
 <h1>An LLM at 50 Hz</h1>
 <p class="muted">A checkable answer to a challenge posed on X on 7 September 2026.</p>
 <blockquote>Can you prompt an LLM to output the high frequency control commands for a legged robot in varying terrain e.g. ashish-kmr.github.io RSS 2021, CoRL 2022 (this is by now 5 year old technology, so I am not picking a particularly hard task).<br><small>@JitendraMalikCV, 7 Sep 2026</small></blockquote>
@@ -148,8 +149,8 @@ details{{margin:.6em 0}}summary{{cursor:pointer;color:var(--ink2)}}
 <div class="hero">
 <div class="tile"><b>{summary['A_open_loop']}/{10*len(TERR)}</b><span>LLM open-loop table: episodes still standing at 6 s, all terrains</span></div>
 <div class="tile"><b>{summary['B_feedback']}/{10*len(TERR)}</b><span>LLM gait plus LLM balance law</span></div>
-<div class="tile"><b>{summary['C_policy_hh']}/{10*len(TERR)}</b><span>trained PPO policy with heading hold</span></div>
-<div class="tile"><b>{n_of('C_policy_hh','ledge10')} → {n_of('C_policy_hh','ledge15')}</b><span>policy: 10 mm ledge vs 15 mm ledge, of 10</span></div>
+<div class="tile"><b>{summary['C_policy']}/{10*len(TERR)}</b><span>trained PPO policy, 0.3 m/s: all of flat, 5 mm rough and most of a 10 mm ledge</span></div>
+<div class="tile"><b>{n_of('C_policy','ledge10')} then {n_of('C_policy','ledge15')}</b><span>policy on a 10 mm ledge, then on a 15 mm ledge, of 10</span></div>
 </div>
 
 <h2>What was tested</h2>
