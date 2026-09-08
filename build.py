@@ -23,21 +23,22 @@ esc = html.escape
 
 # ── figure 1: small multiples, standing out of 10 per terrain, one panel per controller
 def fig_standing():
-    W, H, pad = 300, 150, 28
+    W, H, pad, pb = 300, 165, 28, 40
     bw = (W - 2 * pad) / len(TERR)
     panels = []
     for c in CTRL:
         bars = []
         for i, t in enumerate(TERR):
             r = res[(c['id'], t)]; n = r['standing']
-            h = (H - pad - 22) * n / 10
-            x = pad + i * bw + 4; y = H - 22 - h
+            h = (H - pad - pb) * n / 10
+            x = pad + i * bw + 4; y = H - pb - h
             tip = f"{esc(c['label'])} on {t}: {n} of 10 standing at 6 s, median travelled {r['travelledMedian']:.2f} m, walked off the bank in {r['leftBank']} runs"
             bars.append(f'<rect class="bar" x="{x:.1f}" y="{y:.1f}" width="{bw-8:.1f}" height="{h:.1f}" rx="3"><title>{tip}</title></rect>')
             bars.append(f'<text class="val" x="{x + (bw-8)/2:.1f}" y="{y-3:.1f}" text-anchor="middle">{n}</text>')
-            bars.append(f'<text class="tick" x="{x + (bw-8)/2:.1f}" y="{H-8}" text-anchor="middle">{t}</text>')
-        grid = ''.join(f'<line class="grid" x1="{pad}" x2="{W-pad}" y1="{H-22-(H-pad-22)*k/10:.1f}" y2="{H-22-(H-pad-22)*k/10:.1f}"/>' for k in (5, 10))
-        panels.append(f'<figure class="panel"><figcaption>{esc(c["label"])}</figcaption><svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(c["label"])}: standing episodes of 10 per terrain">{grid}{"".join(bars)}<text class="tick" x="{pad-4}" y="{H-22-(H-pad-22)+4}" text-anchor="end">10</text><text class="tick" x="{pad-4}" y="{H-22+4}" text-anchor="end">0</text></svg></figure>')
+            cx = x + (bw-8)/2
+            bars.append(f'<text class="tick" x="{cx:.1f}" y="{H-pb+10}" text-anchor="end" transform="rotate(-38 {cx:.1f} {H-pb+10})">{t}</text>')
+        grid = ''.join(f'<line class="grid" x1="{pad}" x2="{W-pad}" y1="{H-pb-(H-pad-pb)*k/10:.1f}" y2="{H-pb-(H-pad-pb)*k/10:.1f}"/>' for k in (5, 10))
+        panels.append(f'<figure class="panel"><figcaption>{esc(c["label"])}</figcaption><svg viewBox="0 0 {W} {H}" role="img" aria-label="{esc(c["label"])}: standing episodes of 10 per terrain">{grid}{"".join(bars)}<text class="tick" x="{pad-4}" y="{H-pb-(H-pad-pb)+4}" text-anchor="end">10</text><text class="tick" x="{pad-4}" y="{H-pb+4}" text-anchor="end">0</text></svg></figure>')
     return '<div class="multiples">' + ''.join(panels) + '</div>'
 
 # ── figure 2: trunk x over time, seed 0, on a chosen terrain, four controllers
