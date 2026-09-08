@@ -43,23 +43,30 @@ def fig_standing():
 # ── figure 2: trunk x over time, seed 0, on a chosen terrain, four controllers
 SERIES = [('A_open_loop', 'A open loop', 'var(--s1)'), ('B_feedback', 'B gait + balance', 'var(--s2)'), ('C_policy', 'C policy', 'var(--s3)'), ('C_policy_hh', 'C+ policy, heading hold', 'var(--s4)')]
 def fig_trace(terrain, seed=0):
-    W, H, pl, pb = 640, 240, 44, 30
-    xs = lambda t: pl + (W - pl - 12) * t / 6.0
+    W, H, pl, pr, pb = 640, 240, 44, 150, 30
+    xs = lambda t: pl + (W - pl - pr) * t / 6.0
     ymax = 1.2
     ys = lambda v: H - pb - (H - pb - 12) * max(-0.1, min(ymax, v)) / ymax
-    out = [f'<line class="axis" x1="{pl}" x2="{W-12}" y1="{ys(0):.1f}" y2="{ys(0):.1f}"/>']
+    out = [f'<line class="axis" x1="{pl}" x2="{W-pr}" y1="{ys(0):.1f}" y2="{ys(0):.1f}"/>']
     for v in (0.25, 0.5, 0.75, 1.0):
-        out.append(f'<line class="grid" x1="{pl}" x2="{W-12}" y1="{ys(v):.1f}" y2="{ys(v):.1f}"/><text class="tick" x="{pl-6}" y="{ys(v)+4:.1f}" text-anchor="end">{v:.2f} m</text>')
+        out.append(f'<line class="grid" x1="{pl}" x2="{W-pr}" y1="{ys(v):.1f}" y2="{ys(v):.1f}"/><text class="tick" x="{pl-6}" y="{ys(v)+4:.1f}" text-anchor="end">{v:.2f} m</text>')
     for s in range(0, 7): out.append(f'<text class="tick" x="{xs(s):.1f}" y="{H-8}" text-anchor="middle">{s} s</text>')
+    labels = []
     for cid, name, col in SERIES:
         ep = res[(cid, terrain)]['episodes'][seed]
         pts = ' '.join(f'{xs(i/50):.1f},{ys(p[0]):.1f}' for i, p in enumerate(ep['trace']))
         out.append(f'<polyline class="line" style="stroke:{col}" points="{pts}"><title>{esc(name)}, seed {seed}, {terrain}: travelled {ep["travelled"]:.2f} m, {"fell at %.2f s" % ep["fellAt"] if ep["fellAt"] is not None else "standing at 6 s"}</title></polyline>')
-        last = ep['trace'][-1]
         if ep['fellAt'] is not None:
             k = int(ep['fellAt'] * 50); p = ep['trace'][k]
             out.append(f'<circle class="mark" style="fill:{col}" cx="{xs(k/50):.1f}" cy="{ys(p[0]):.1f}" r="4"><title>{esc(name)} fell at {ep["fellAt"]} s</title></circle>')
-        out.append(f'<text class="label" style="fill:{col}" x="{W-10}" y="{ys(last[0])+4:.1f}" text-anchor="end">{esc(name)}</text>')
+        tail = 'fell %.1f s' % ep['fellAt'] if ep['fellAt'] is not None else '%.2f m' % ep['travelled']
+        labels.append([ys(ep['trace'][-1][0]), f'{name}, {tail}', col])
+    # direct labels in the right margin, pushed apart so none overlap
+    labels.sort(key=lambda l: l[0])
+    for i in range(1, len(labels)):
+        if labels[i][0] - labels[i-1][0] < 13: labels[i][0] = labels[i-1][0] + 13
+    for y, text, col in labels:
+        out.append(f'<text class="label" style="fill:{col}" x="{W-pr+6}" y="{y+4:.1f}">{esc(text)}</text>')
     legend = ''.join(f'<span class="key"><i style="background:{col}"></i>{esc(n)}</span>' for _, n, col in SERIES)
     return f'<div class="legend">{legend}</div><svg viewBox="0 0 {W} {H}" role="img" aria-label="Trunk x position over time on {terrain}, seed {seed}">{"".join(out)}</svg>'
 
